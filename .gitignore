@@ -1,0 +1,7 @@
+.platform/
+.tools/
+.local/
+out/
+*.local.bicepparam
+*.parameters.json
+__pycache__/

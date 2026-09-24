@@ -1,0 +1,23 @@
+name: Prepare native tools
+description: Restore the pinned platform source and Bicep compiler; optionally install Azure CLI.
+inputs:
+  cloud:
+    description: Install Azure CLI for an authorized cloud job.
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - shell: pwsh
+      run: ./scripts/Get-Bicep.ps1
+    - if: inputs.cloud == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 -m venv "$RUNNER_TEMP/native-azure-cli"
+        "$RUNNER_TEMP/native-azure-cli/bin/pip" install --quiet --disable-pip-version-check --requirement requirements-azure-cli.txt
+        echo "$RUNNER_TEMP/native-azure-cli/bin" >> "$GITHUB_PATH"
+    - if: inputs.cloud == 'true'
+      shell: pwsh
+      run: |
+        $version = az version --output json | ConvertFrom-Json
+        if ($LASTEXITCODE -ne 0 -or $version.'azure-cli' -ne '2.88.0') { throw 'Azure CLI version mismatch.' }

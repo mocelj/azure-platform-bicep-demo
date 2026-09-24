@@ -1,0 +1,49 @@
+name: Demonstrate Azure Policy denial
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-web-app-demo
+  cancel-in-progress: false
+jobs:
+  disabled:
+    if: vars.ENABLE_AZURE_DEPLOYMENT != 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "Azure validation is disabled until the separately approved platform setup is complete."
+  policy-check:
+    if: vars.ENABLE_AZURE_DEPLOYMENT == 'true' && github.ref == 'refs/heads/main' && github.repository == 'mocelj/azure-platform-bicep-demo'
+    runs-on: ubuntu-24.04
+    environment: demo-plan
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ENABLE_AZURE_DEPLOYMENT: ${{ vars.ENABLE_AZURE_DEPLOYMENT }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+      PLATFORM_LOG_ANALYTICS_RESOURCE_ID: ${{ secrets.PLATFORM_LOG_ANALYTICS_RESOURCE_ID }}
+      PLATFORM_PRIVATE_ENDPOINT_SUBNET_ID: ${{ secrets.PLATFORM_PRIVATE_ENDPOINT_SUBNET_ID }}
+      PLATFORM_PRIVATE_DNS_ZONE_ID: ${{ secrets.PLATFORM_PRIVATE_DNS_ZONE_ID }}
+      PLATFORM_WEB_INTEGRATION_SUBNET_ID: ${{ secrets.PLATFORM_WEB_INTEGRATION_SUBNET_ID }}
+      PLATFORM_POLICY_ASSIGNMENT_ID: ${{ secrets.PLATFORM_POLICY_ASSIGNMENT_ID }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/prepare
+        with:
+          cloud: 'true'
+      - name: Compile before Azure authentication
+        shell: pwsh
+        run: ./scripts/Build.ps1
+      - uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Validate only; never deploy the negative fixture
+        shell: pwsh
+        run: ./scripts/Cloud.ps1 -Action PolicyCheck

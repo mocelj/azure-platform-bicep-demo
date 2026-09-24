@@ -1,0 +1,7 @@
+# Demo review routing. Use a separate platform team for these paths in production.
+* @mocelj
+/.github/ @mocelj
+/platform.ref @mocelj
+/platform-setup/ @mocelj
+/scripts/ @mocelj
+/scenarios/ @mocelj
