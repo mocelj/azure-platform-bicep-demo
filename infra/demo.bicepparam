@@ -1,7 +1,7 @@
 using './main.bicep'
 
 param name = 'ledger-native'
-param size = 'small'
+param size = 'medium'
 
 // The platform supplies these bindings through the protected GitHub environment.
 param logAnalyticsWorkspaceResourceId = readEnvironmentVariable('PLATFORM_LOG_ANALYTICS_RESOURCE_ID')
